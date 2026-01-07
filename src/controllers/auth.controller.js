@@ -1,0 +1,221 @@
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+// const { User } = require('/../models'); // Sequelize User model
+const { User,User_Role } = require('../models');  // ✅ correct relative path
+console.log('User',User)
+
+const { JWT_SECRET, JWT_EXPIRES } = process.env;
+
+// ----------------- REGISTER -----------------
+exports.register = async (req, res) => {
+  try {
+    // const { name, email, password, role } = req.body;
+    const { name, email, password, role,phone,dob } = req.body || {};
+      if (!name || !email || !password || !role || !phone || !dob) {
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
+      }
+    // Check if user already exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Email already registered' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      phone,
+      dob
+    });
+    
+    const user_id = user.id;
+    const user_role = await User_Role.create({
+      user_id,
+      role_id:role
+    });
+    
+    // const User_data = await User.findOne({ where: { id:user_id } });
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+    //   data: User_data
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// ----------------- LOGIN -----------------
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check user
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    // Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Invalid email or password' });
+    }
+    
+    const user_role = await User_Role.findOne({
+      where: { user_id:  user.dataValues.id }
+    });
+    
+    user.dataValues.role = user_role ? user_role.role_id : null;
+    
+    console.log('JWT_EXPIRES',JWT_EXPIRES)
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES }
+    );
+    
+    res.json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        user: user,
+        token,
+        Token_Expires:JWT_EXPIRES.toString()
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getProfile = async (req, res) => {
+  try {
+    const id = req.body;
+    
+    if (!req.body) {
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
+      }
+      
+    const userId = req.body.id;
+    
+    const user = await User.findByPk(userId);
+    
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    // const user_role = await UserRole.findOne({{whereuser_id:userId});
+    const user_role = await User_Role.findOne({
+      where: { user_id: userId }
+    });
+    
+    user.dataValues.role = user_role ? user_role.role_id : null;
+
+    return res.json({
+      success: true,
+      data: user
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id; // JWT se
+    console.log('userId',userId)
+    const { old_password, new_password, confirm_password } = req.body;
+
+    // 1️⃣ Validation
+    if (!old_password || !new_password || !confirm_password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Old password, new password and confirm password are required'
+      });
+    }
+
+    // 2️⃣ New & Confirm password match
+    if (new_password !== confirm_password) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password and confirm password do not match'
+      });
+    }
+
+    // 3️⃣ User fetch
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // 4️⃣ Old password check
+    const isOldPasswordCorrect = await bcrypt.compare(
+      old_password,
+      user.password
+    );
+
+    if (!isOldPasswordCorrect) {
+      return res.status(400).json({
+        success: false,
+        message: 'Old password is incorrect'
+      });
+    }
+
+    // 5️⃣ New password same as old?
+    const isSamePassword = await bcrypt.compare(
+      new_password,
+      user.password
+    );
+
+    if (isSamePassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password cannot be same as old password'
+      });
+    }
+
+    // 6️⃣ Password strength (optional but recommended)
+    if (new_password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters long'
+      });
+    }
+
+    // 7️⃣ Hash & update
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+    await user.update({ password: hashedPassword });
+
+    return res.json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+
+  } catch (error) {
+    console.log('Change Password Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Something went wrong'
+    });
+  }
+};
