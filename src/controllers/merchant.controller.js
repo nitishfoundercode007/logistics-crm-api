@@ -17,77 +17,127 @@ async function get_minRechargeamount() {
 }
 
 exports.store_details = async (req, res) => {
-    try {
-        const { user_id, business_type, document_type, company_name,website_url,is_gst,aadhar_no,document_front,document_back,gst_no,business_registered_address,gst_certificate_image,pan_no,dob } = req.body || {};
-    
-        if (!user_id || !business_type || !document_type || !company_name || !website_url || !is_gst || !business_registered_address) {
-            return res.status(400).json({ success: false, message: 'Missing required fields' });
-        }
-        // Check if user already exists
-        const existingDetails = await Merchant_details.findOne({ where: { user_id } });
-        if (existingDetails) {
-          return res.status(400).json({ success: false, message: 'Details already Filled' });
-        }
-        
-        if(document_type==1)  // Aadhar
-        {
-            if (!aadhar_no || !document_front || !document_back ) {
-                return res.status(400).json({ success: false, message: 'Missing Aadhar No OR Aadhar Front Image OR Aadhar Back Image' });
-            }
-        }
-        else if(document_type==2) // Pan
-        {
-            if (!document_front) {
-                return res.status(400).json({ success: false, message: 'Missing Pan Front Image ' });
-            }
-        }
-        else if(document_type==3)  // Voter ID
-        {
-            if (!document_front || !document_back ) {
-                return res.status(400).json({ success: false, message: 'Missing Voter ID Front Image OR Voter ID Back Image' });
-            }
-        }
-        if(is_gst==1)  // Aadhar
-        {
-            if (!gst_no) {
-                return res.status(400).json({ success: false, message: 'Missing Gst No ' });
-            }
-            
-            if (!gst_certificate_image) {
-                return res.status(400).json({ success: false, message: 'Missing Gst Certificate Image ' });
-            }
-        }
-        else{
-            if (!pan_no) {
-                return res.status(400).json({ success: false, message: 'Missing Pan Card No ' });
-            }
-        }
-        
-        const user = await Merchant_details.create({
-          user_id,
-          business_type,
-          document_type,
-          company_name,
-          website_url,
-          is_gst,
-          gst_no,
-          aadhar_no,
-          document_front,
-          document_back,
-          registered_business_address:business_registered_address,
-          pan_no,
-          gst_certificate_upload:gst_certificate_image
-        });
-        
-        res.status(201).json({
-          success: true,
-          message: 'Details Successfully Inserted',
-        //   data: User_data
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: 'Server error' });
+  try {
+    const { user_id } = req.body || {};
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      });
     }
+
+    /* ---------- Check record exists ---------- */
+    const merchant = await Merchant_details.findOne({
+      where: { user_id }
+    });
+
+    if (!merchant) {
+      return res.status(404).json({
+        success: false,
+        message: 'Merchant record not found'
+      });
+    }
+
+    /* ---------- Validation (only if value present) ---------- */
+    if (req.body.document_type == 1) {
+      if (!req.body.aadhar_no || !req.body.document_front || !req.body.document_back) {
+        return res.status(400).json({
+          success: false,
+          message: 'Aadhar number & both images required'
+        });
+      }
+    }
+
+    if (req.body.document_type == 2 && !req.body.document_front) {
+      return res.status(400).json({
+        success: false,
+        message: 'PAN card image required'
+      });
+    }
+
+    if (req.body.document_type == 3) {
+      if (!req.body.document_front || !req.body.document_back) {
+        return res.status(400).json({
+          success: false,
+          message: 'Voter ID front & back required'
+        });
+      }
+    }
+
+    if (req.body.is_gst == 1) {
+      if (!req.body.gst_no || !req.body.gst_certificate_image) {
+        return res.status(400).json({
+          success: false,
+          message: 'GST number & certificate required'
+        });
+      }
+    }
+
+    if (req.body.is_gst == 0 && req.body.pan_no === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'PAN number required'
+      });
+    }
+
+    /* ---------- Build update object dynamically ---------- */
+    const allowedFields = [
+      'company_name',
+      'website_url',
+      'brand_name',
+      'company_logo',
+      'business_type',
+      'document_type',
+      'is_gst',
+      'aadhar_no',
+      'document_front',
+      'document_back',
+      'gst_no',
+      'pan_no'
+    ];
+
+    const updateData = {};
+
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    });
+
+    // custom DB column mapping
+    if (req.body.business_registered_address !== undefined) {
+      updateData.registered_business_address = req.body.business_registered_address;
+    }
+
+    if (req.body.gst_certificate_image !== undefined) {
+      updateData.gst_certificate_upload = req.body.gst_certificate_image;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No data provided to update'
+      });
+    }
+
+    /* ---------- Update only provided fields ---------- */
+    await Merchant_details.update(updateData, {
+      where: { user_id }
+    });
+
+    res.json({
+      success: true,
+      message: 'Details updated successfully'
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
 };
 
 exports.add_pickup_address = async (req, res) => {

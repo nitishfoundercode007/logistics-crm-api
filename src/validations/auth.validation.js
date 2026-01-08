@@ -8,6 +8,8 @@ const registerSchema = Joi.object({
   role: Joi.string().valid('1','2','3','4').required(),
   phone: Joi.string().min(10).required(),
   dob: Joi.string().required(),
+  company_name:Joi.string().required(),
+  website_url: Joi.string().uri().allow('', null).optional()
 });
 
 // ----------------- LOGIN VALIDATION -----------------

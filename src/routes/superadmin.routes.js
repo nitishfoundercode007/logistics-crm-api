@@ -14,9 +14,9 @@ router.post('/enable/gateway', auth, SuperadminController.enable_gateway);
 router.post('/get/all_gateway', auth, SuperadminController.get_all_gateway);
 router.post('/action/map_key', auth, SuperadminController.action_map_key);
 router.post('/update/logistics_support', auth, SuperadminController.update_logistics_support);
-router.post('/action/support_question_answer', auth, SuperadminController.action_support_question_answer);
+// router.post('/action/support_question_answer', auth, SuperadminController.action_support_question_answer);
 
-router.post('/cashfree', auth, SuperadminController.check_cashfree);
+// router.post('/cashfree', auth, SuperadminController.check_cashfree);
 
 
 module.exports = router;
