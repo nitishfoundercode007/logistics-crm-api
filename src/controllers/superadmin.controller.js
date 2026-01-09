@@ -31,6 +31,7 @@ exports.get_all_cupons = async (req, res) => {
     }
     const cupons_data = await Cupons.findAll();
     
+    
     return res.status(200).json({
       success: true,
       message: 'Get successfully',
@@ -75,6 +76,7 @@ exports.get_settings_data = async (req, res) => {
             
         }
     }
+    console.log(`data`,data)
     // data=settings_data;
     return res.status(200).json({
       success: true,
