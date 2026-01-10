@@ -10,6 +10,7 @@ const User = sequelize.define('User', {
   phone: DataTypes.STRING,
   wallet: DataTypes.DECIMAL(10, 2),
   dob:DataTypes.STRING,
+  comission_percent:DataTypes.INTEGER,
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, {
@@ -100,7 +101,7 @@ const Address_details = sequelize.define('Address_details', {
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, {
-  tableName: 'address_details',   // ✅ explicitly set table name
+  tableName: 'merchants_address_details',   // ✅ explicitly set table name
   timestamps: false     // agar aap createdAt / updatedAt nahi use kar rahe
 });
 

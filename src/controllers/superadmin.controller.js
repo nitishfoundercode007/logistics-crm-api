@@ -1,5 +1,6 @@
-const {Cupons,Payment_gateway,Settings} = require('../models');
+const {sequelize,Cupons,Payment_gateway,Settings,HubAddress_details,HubContact_details,HubOperational_details,HubBank_details,User,User_Role} = require('../models');
 const { Op } = require('sequelize');
+const bcrypt = require('bcrypt');
 
 exports.get_all_gateway = async (req, res) => {
   try {
@@ -404,6 +405,130 @@ exports.update_logistics_support = async (req, res) => {
 
   } catch (err) {
     console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: err.message
+    });
+  }
+};
+
+exports.store_hub = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  try {
+    const {
+      user_id,
+      name,
+      hubId,
+      email,
+      password,
+      confirmPassword,
+      AddressDetails,
+      ContactDetails,
+      OperationDetails,
+      BankDetails
+    } = req.body || {};
+
+    /* ================= BASIC VALIDATION ================= */
+    if (!user_id || !name || !hubId || !email || !password || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Required fields are missing'
+      });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password and confirm password do not match'
+      });
+    }
+
+    /* ================= NESTED VALIDATION ================= */
+    const requiredAddress = ['full_address', 'area', 'city', 'state_id','country_id', 'pincode', 'lat', 'long'];
+    const requiredContact = ['ManagerName', 'ManagerMobile', 'ManagerEmailId','dob'];
+    const requiredOperation = ['opening_time', 'closing_time', 'working_days', 'service_radius', 'max_capacity'];
+    const requiredBank = ['account_holder_name', 'bank_name', 'account_no', 'ifsc_code'];
+
+    const validateFields = (obj, fields) =>
+      obj && fields.every(key => obj[key]);
+
+    if (
+      !validateFields(AddressDetails, requiredAddress) ||
+      !validateFields(ContactDetails, requiredContact) ||
+      !validateFields(OperationDetails, requiredOperation) ||
+      !validateFields(BankDetails, requiredBank)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'One or more required detail fields are missing'
+      });
+    }
+    
+    const validDays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+    const isValidWorkingDays = (days) =>
+      Array.isArray(days) &&
+      days.length > 0 &&
+      days.every(day => validDays.includes(day));
+    
+    if (!isValidWorkingDays(OperationDetails.working_days)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid working_days. Allowed values: mon, tue, wed, thu, fri, sat, sun'
+      });
+    }
+    
+    /* ================= CREATE HUB USER ================= */
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const hubUser = await User.create({
+      name,
+      email,
+      password: hashedPassword
+    }, { transaction });
+
+    /* ================= ASSIGN ROLE ================= */
+    await User_Role.create({
+      user_id: hubUser.id,
+      role_id: 3 // Hub Role
+    }, { transaction });
+
+    /* ================= SAVE HUB DETAILS ================= */
+    await HubAddress_details.create({
+      ...AddressDetails,
+      hub_id: hubId,
+      user_id: hubUser.id,
+      lat_long:`${AddressDetails.lat},${AddressDetails.long}`
+    }, { transaction });
+
+    await HubContact_details.create({
+      ...ContactDetails,
+      hub_id: hubId,
+    }, { transaction });
+
+    await HubOperational_details.create({
+      ...OperationDetails,
+      working_days: JSON.stringify(OperationDetails.working_days),
+      hub_id: hubId,
+    }, { transaction });
+
+    await HubBank_details.create({
+      ...BankDetails,
+      hub_id: hubId,
+    }, { transaction });
+
+    await transaction.commit();
+
+    return res.status(201).json({
+      success: true,
+      message: 'Hub created successfully'
+    });
+
+  } catch (err) {
+    await transaction.rollback();
+    console.error(err);
+
     return res.status(500).json({
       success: false,
       message: 'Server error',

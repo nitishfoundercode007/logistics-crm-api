@@ -121,7 +121,7 @@ const transporters = nodemailer.createTransport({
   }
 });
 
-async function sendLiveMail(to) {
+exports.sendLiveMail = async (to) => {
     const otp = crypto.randomInt(100000, 1000000);
   const htmlTemplate = `
     <!DOCTYPE html>

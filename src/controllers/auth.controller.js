@@ -1,7 +1,8 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-// const { User } = require('/../models'); // Sequelize User model
+const Mailer = require('../utils/mailer');
 const { User,User_Role,Merchant_details } = require('../models');  // ✅ correct relative path
+
 console.log('User',User)
 
 const { JWT_SECRET, JWT_EXPIRES } = process.env;
@@ -259,3 +260,33 @@ exports.updateProfile = async (req, res) => {
     });
   }
 };
+
+exports.forgetPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+        return res.status(400).json({ success: false, message: 'Email is Required' });
+    }
+    
+    const existingUser = await User.findOne({ where: { email } });
+    if (!existingUser) {
+      return res.status(400).json({ success: false, message: 'Email Not registered Try Right Email' });
+    }
+    
+    await Mailer.sendLiveMail(email);
+    
+    return res.json({
+      success: true,
+      message: 'Request Sent On Mail'
+    });
+
+  } catch (error) {
+    console.log('Profile Update Error:', error);
+    return res.status(500).json({
+      success: false,
+      message: `Something went wrong ${error}`
+    });
+  }
+};
+
