@@ -129,5 +129,7 @@ Pickup_incharge_details.belongsTo(Merchant_pickup_address, {
 });
 
 
+User.hasMany(User_Role, { foreignKey: 'user_id' });
+User_Role.belongsTo(User, { foreignKey: 'user_id' });
 
 module.exports = {User,User_Role,Merchant_details,Merchant_pickup_address,Pickup_incharge_details,Address_details};

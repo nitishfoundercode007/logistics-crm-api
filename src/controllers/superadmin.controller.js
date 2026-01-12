@@ -536,3 +536,84 @@ exports.store_hub = async (req, res) => {
     });
   }
 };
+
+exports.getMerchantList = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      include: [{
+        model: User_Role,
+        where: { role_id: 2 },
+        attributes: []
+      }]
+    });
+
+    return res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: err.message
+    });
+  }
+};
+
+exports.getHubList = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      include: [{
+        model: User_Role,
+        where: { role_id: 3 },
+        attributes: []
+      }]
+    });
+
+    return res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: err.message
+    });
+  }
+};
+
+exports.getHubAgentList = async (req, res) => {
+  try {
+      const HubId= req.body.HubId;
+    const users = await User.findAll({
+      include: [{
+        model: User_Role,
+        where: { role_id: 4 },
+        
+        attributes: []
+      }]
+    });
+
+    return res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: err.message
+    });
+  }
+};
+
