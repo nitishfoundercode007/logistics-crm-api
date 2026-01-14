@@ -129,6 +129,9 @@ exports.getProfile = async (req, res) => {
     });
     
     user.dataValues.role = user_role ? user_role.role_id : null;
+    user.dataValues.empId="PA1234567564567567"
+    user.dataValues.fullAddress="7/85 Jankipuram BKT"
+    user.dataValues.joining_date="1995/01/09"
 
     return res.json({
       success: true,
@@ -231,7 +234,7 @@ exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id; // JWT se
     console.log('userId',userId)
-    const { name, phone, dob } = req.body;
+    const { name, phone, dob,about } = req.body;
     const user = await User.findByPk(userId);
     // 7️⃣ Hash & update
     if(name)
@@ -245,6 +248,10 @@ exports.updateProfile = async (req, res) => {
     if(dob)
     {
         await user.update({ dob: dob });
+    }
+    if(about)
+    {
+        await user.update({ about: about });
     }
     
     return res.json({

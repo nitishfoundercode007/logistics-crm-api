@@ -11,6 +11,7 @@ const User = sequelize.define('User', {
   wallet: DataTypes.DECIMAL(10, 2),
   dob:DataTypes.STRING,
   comission_percent:DataTypes.INTEGER,
+  about:DataTypes.STRING,
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, {
