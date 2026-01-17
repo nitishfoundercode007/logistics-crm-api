@@ -22,82 +22,6 @@ async function getTransporter() {
   return transporterPromise;
 }
 
-async function sendTestMail(to) {
-  const transporter = await getTransporter();
-
-  const htmlTemplate = `
-  <!DOCTYPE html>
-  <html>
-    <head>
-      <style>
-        body { font-family: Arial, sans-serif; }
-        .card {
-          max-width: 500px;
-          margin: auto;
-          border: 1px solid #ddd;
-          padding: 20px;
-          border-radius: 8px;
-        }
-        .btn {
-          display: inline-block;
-          padding: 10px 20px;
-          background: #4CAF50;
-          color: #fff;
-          text-decoration: none;
-          border-radius: 5px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="card">
-        <h2>Hello 👋</h2>
-        <p>This is a <b>test email</b> sent using Node.js SMTP.</p>
-        <a href="https://example.com" class="btn">Verify</a>
-        <p style="margin-top:20px;">Thanks,<br/>Team</p>
-      </div>
-    </body>
-  </html>
-  `;
-
-  const info = await transporter.sendMail({
-    from: '"Test App" <test@example.com>',
-    to,
-    subject: 'SMTP Test Email',
-    html: htmlTemplate
-  });
-
-  return info;
-}
-
-
-exports.SendTestMail = async (req, res) => {
-  try {
-    const { to } = req.body;
-
-    if (!to) {
-      return res.status(400).json({
-        success: false,
-        message: 'Recipient email is required'
-      });
-    }
-
-    const info = await sendTestMail(to);
-
-    return res.status(200).json({
-      success: true,
-      message: 'Email sent successfully',
-      preview_url: nodemailer.getTestMessageUrl(info)
-    });
-
-  } catch (err) {
-    console.error('SMTP Error:', err);
-    return res.status(500).json({
-      success: false,
-      message: `Internal server error ${err}`
-    });
-  }
-};
-
 //========================================================Live Gmail SMTP===============================================================================
 // MAIL_MAILER=smtp
 // MAIL_HOST=smtp.hostinger.com
@@ -121,8 +45,7 @@ const transporters = nodemailer.createTransport({
   }
 });
 
-exports.sendLiveMail = async (to) => {
-    const otp = crypto.randomInt(100000, 1000000);
+exports.forgetPasswordOTPTemplate = async (to,otp) => {
   const htmlTemplate = `
     <!DOCTYPE html>
 
@@ -268,29 +191,3 @@ support@logisticscrm.com
   return info;
 }
 
-exports.SendLiveMail = async (req, res) => {
-  try {
-    const { to } = req.body;
-
-    if (!to) {
-      return res.status(400).json({
-        success: false,
-        message: 'Recipient email is required'
-      });
-    }
-
-    await sendLiveMail(to);
-
-    return res.status(200).json({
-      success: true,
-      message: 'Mail sent successfully to inbox'
-    });
-
-  } catch (err) {
-    console.error('SMTP Error:', err);
-    return res.status(500).json({
-      success: false,
-      message: err.message
-    });
-  }
-};

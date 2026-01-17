@@ -18,6 +18,8 @@ router.post('/login', validate(loginSchema), authController.login);
 router.post('/profile', auth, authController.getProfile);
 router.post('/changePassword', auth, authController.changePassword);
 router.post('/updateProfile', auth, authController.updateProfile);
-router.post('/forgetPassword', authController.forgetPassword);
+router.post('/forgetPasswordRequest', authController.forgetPassword);
+router.post('/VerifyOTPForgetP', authController.VerifyOTPForgetP);
+router.post('/generateNewPassword', authController.generateNewPassword);
 
 module.exports = router;

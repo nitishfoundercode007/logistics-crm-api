@@ -29,6 +29,19 @@ const User_Role = sequelize.define('User_Role', {
   timestamps: false     // agar aap createdAt / updatedAt nahi use kar rahe
 });
 
+const ForgetPasswordRequest = sequelize.define('ForgetPasswordRequest', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  email: DataTypes.STRING,
+  type: DataTypes.INTEGER,
+  otp: DataTypes.INTEGER,
+  status: DataTypes.INTEGER,
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+  tableName: 'forget_password_request',   // ✅ explicitly set table name
+  timestamps: false     // agar aap createdAt / updatedAt nahi use kar rahe
+});
+
 const Merchant_details = sequelize.define('Merchant_details', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   business_type: DataTypes.INTEGER,
@@ -133,4 +146,4 @@ Pickup_incharge_details.belongsTo(Merchant_pickup_address, {
 User.hasMany(User_Role, { foreignKey: 'user_id' });
 User_Role.belongsTo(User, { foreignKey: 'user_id' });
 
-module.exports = {User,User_Role,Merchant_details,Merchant_pickup_address,Pickup_incharge_details,Address_details};
+module.exports = {User,User_Role,Merchant_details,Merchant_pickup_address,Pickup_incharge_details,Address_details,ForgetPasswordRequest};
