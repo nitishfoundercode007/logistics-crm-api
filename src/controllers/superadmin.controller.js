@@ -163,7 +163,7 @@ exports.action_map_key = async (req, res) => {
 
 exports.action_cupon = async (req, res) => {
   try {
-    const { action_type, cupon_id } = req.body;
+    const { action_type, cupon_id,cupon_code, description, active_date,valid_days,valid_till,cashback_amount_percentage,min_amount,is_percent } = req.body;
 
     // ✅ Proper validation
     if (action_type === undefined || !cupon_id) {
@@ -178,6 +178,39 @@ exports.action_cupon = async (req, res) => {
     };
 
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    
+    if (cupon_code) {
+      update_data.cuponcode = cupon_code;
+    }
+    
+    if (description) {
+      update_data.description = description;
+    }
+    
+    if (active_date) {
+      update_data.active_date = active_date;
+    }
+    
+    if (valid_days) {
+      update_data.valid_days = valid_days;
+    }
+    
+    if (valid_till) {
+      update_data.valid_till = valid_till;
+    }
+    
+    if (min_amount) {
+      update_data.min_amount = min_amount;
+    }
+    
+    if (cashback_amount_percentage) {
+      update_data.cashback_amount_percentage = cashback_amount_percentage;
+    }
+    
+    if (is_percent) {
+      update_data.is_percent = is_percent;
+    }
+    
 
     if (action_type === '1') {
       update_data.active_date = today;
