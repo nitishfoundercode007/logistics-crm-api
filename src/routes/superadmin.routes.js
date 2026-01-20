@@ -18,7 +18,7 @@ router.post('/store/hub', auth, SuperadminController.store_hub);
 router.post('/merchant/list', auth, SuperadminController.getMerchantList);
 router.post('/hub/list', auth, SuperadminController.getHubList);
 router.post('/hubAgent/list', auth, SuperadminController.getHubAgentList);
-// router.post('/action/support_question_answer', auth, SuperadminController.action_support_question_answer);
+router.post('/action/support_question_answer', auth, SuperadminController.action_support_question_answer);
 
 // router.post('/cashfree', auth, SuperadminController.check_cashfree);
 

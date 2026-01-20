@@ -1,4 +1,4 @@
-const {sequelize,Cupons,Payment_gateway,Settings,HubAddress_details,HubContact_details,HubOperational_details,HubBank_details,User,User_Role} = require('../models');
+const {sequelize,Cupons,Payment_gateway,Settings,HubAddress_details,HubContact_details,HubOperational_details,HubBank_details,User,User_Role,Shipping_help_QA} = require('../models');
 const { Op } = require('sequelize');
 const bcrypt = require('bcrypt');
 
@@ -403,6 +403,7 @@ exports.update_logistics_support = async (req, res) => {
   try {
     const {
       user_id,
+      type,
       description,
       email,
       phone,
@@ -410,30 +411,42 @@ exports.update_logistics_support = async (req, res) => {
       location
     } = req.body || {};
 
-    if (!user_id) {
+    if (!user_id || !type) {
       return res.status(400).json({
         success: false,
-        message: 'Missing User Id'
+        message: 'Missing User Id OR Type'
       });
     }
-
-    const values = {
-        description: description,
-        email: email,
-        phone:phone,
-        time:avl_time,
-        location:location
-    };
+    
+    if(type=='2')
+    {
+        const values = {
+            description: description,
+            email: email,
+            phone:phone,
+            time:avl_time,
+            location:location
+        };
+            
+        valuesn=JSON.stringify(values)
+        await Settings.update(
+            { value: valuesn },
+            { where: { key: 'Logistics-Support' } }
+        );
         
-    valuesn=JSON.stringify(values)
-    await Settings.update(
-        { value: valuesn },
-        { where: { key: 'Logistics-Support' } }
-    );
+        data= await Settings.findOne({ where :{key: 'Logistics-Support'}})
+        datas=JSON.parse(data.value)
+    }
+    else{
+        data= await Settings.findOne({ where :{key: 'Logistics-Support'}})
+        datas=JSON.parse(data.value)
+    }
+        
 
     return res.status(200).json({
       success: true,
-      message: 'Logistics Support updated successfully'
+      message: 'Logistics Support updated successfully',
+        data:datas,
     });
 
   } catch (err) {
@@ -648,5 +661,73 @@ exports.getHubAgentList = async (req, res) => {
       error: err.message
     });
   }
+};
+
+exports.action_support_question_answer = async (req, res) => {
+    try {
+        const { user_id, question, answer,type,qaid} = req.body || {};
+    
+        if (!user_id || !type ) {
+            return res.status(400).json({ success: false, message: 'Missing required fields' });
+        }
+        
+        if(type=='1')
+        {
+            if (!question || !answer) {
+                return res.status(400).json({ success: false, message: 'Missing required fields' });
+            }
+            const user = await Shipping_help_QA.create({
+              question,
+              answer
+            });
+            const qa_list=await Shipping_help_QA.findAll();
+        }
+        else if(type=='2')
+        {
+            if(!qaid)
+            {
+                return res.status(400).json({ success: false, message: 'QA Id is required' });
+            }
+            if(question)
+            {
+                await Shipping_help_QA.update(
+                    { question: question },
+                    { where: { id: qaid } }
+                );
+            }
+            if(answer)
+            {
+                await Shipping_help_QA.update(
+                    { answer: answer },
+                    { where: { id: qaid } }
+                );
+            }
+            qa_list=await Shipping_help_QA.findAll();
+        }
+        else if(type=='0')
+        {
+           qa_list=await Shipping_help_QA.findAll();
+        }
+        else if(type=='3')
+        {
+            if(!qaid)
+            {
+                return res.status(400).json({ success: false, message: 'QA Id is required' });
+            }
+           await Shipping_help_QA.destroy({
+              where: { id: qaid }
+            });
+            qa_list=await Shipping_help_QA.findAll();
+        }
+        
+        res.status(201).json({
+          success: true,
+          message: 'Successfully Executed',
+          data: qa_list
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: `Server error ${err}` });
+    }
 };
 
