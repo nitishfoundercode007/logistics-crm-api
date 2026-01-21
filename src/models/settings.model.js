@@ -35,6 +35,7 @@ const Cupons = sequelize.define('Cupons', {
 const Payment_gateway = sequelize.define('Payment_gateway', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   payment_gateway_title: DataTypes.STRING,
+  images:DataTypes.STRING,
   environment:  DataTypes.STRING,
   client_id: DataTypes.STRING,
   client_secret: DataTypes.STRING,
