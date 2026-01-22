@@ -731,3 +731,72 @@ exports.action_support_question_answer = async (req, res) => {
     }
 };
 
+
+exports.cashfree = async (req, res) => {
+    try {
+        const { user_id, question, answer,type,qaid} = req.body || {};
+    
+        if (!user_id || !type ) {
+            return res.status(400).json({ success: false, message: 'Missing required fields' });
+        }
+        
+        if(type=='1')
+        {
+            if (!question || !answer) {
+                return res.status(400).json({ success: false, message: 'Missing required fields' });
+            }
+            const user = await Shipping_help_QA.create({
+              question,
+              answer
+            });
+            const qa_list=await Shipping_help_QA.findAll();
+        }
+        else if(type=='2')
+        {
+            if(!qaid)
+            {
+                return res.status(400).json({ success: false, message: 'QA Id is required' });
+            }
+            if(question)
+            {
+                await Shipping_help_QA.update(
+                    { question: question },
+                    { where: { id: qaid } }
+                );
+            }
+            if(answer)
+            {
+                await Shipping_help_QA.update(
+                    { answer: answer },
+                    { where: { id: qaid } }
+                );
+            }
+            qa_list=await Shipping_help_QA.findAll();
+        }
+        else if(type=='0')
+        {
+           qa_list=await Shipping_help_QA.findAll();
+        }
+        else if(type=='3')
+        {
+            if(!qaid)
+            {
+                return res.status(400).json({ success: false, message: 'QA Id is required' });
+            }
+           await Shipping_help_QA.destroy({
+              where: { id: qaid }
+            });
+            qa_list=await Shipping_help_QA.findAll();
+        }
+        
+        res.status(201).json({
+          success: true,
+          message: 'Successfully Executed',
+          data: qa_list
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: `Server error ${err}` });
+    }
+};
+
