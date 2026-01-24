@@ -12,6 +12,6 @@ router.post('/get/pickup_address_byId', auth, MerchantController.get_pickup_addr
 router.post('/update/pickup_address', auth, MerchantController.update_pickup_address);
 router.post('/create/order', auth, MerchantController.create_order);
 router.post('/recharge/wallet', auth, MerchantController.recharge_wallet);
-
+router.post('/get/merchant_details', auth, MerchantController.get_merchant_details);
 
 module.exports = router;

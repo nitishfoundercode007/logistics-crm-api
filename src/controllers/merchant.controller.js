@@ -1,4 +1,4 @@
-const {Merchant_details,Merchant_pickup_address,Address_details,Pickup_incharge_details,Orders,Transaction_History,Settings} = require('../models');
+const {Merchant_details,Merchant_pickup_address,Address_details,Pickup_incharge_details,Orders,Transaction_History,Settings,User} = require('../models');
 
 function generateRandomString(length = 8) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -135,7 +135,7 @@ exports.store_details = async (req, res) => {
     console.error(err);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: `Server error ${err}`
     });
   }
 };
@@ -633,6 +633,99 @@ exports.recharge_wallet = async (req, res) => {
     res.status(500).json({
       success: false,
       message: `Server error ${err}`
+    });
+  }
+};
+
+exports.get_merchant_details = async (req, res) => {
+    try {
+        const { user_id, type } = req.body;
+
+        if (!user_id || !type) {
+            return res.status(400).json({
+                success: false,
+                message: 'User ID or type is required'
+            });
+        }
+
+        let merchant_Details = null;
+        let responseData = null;
+
+        if (type === '1') {
+            merchant_Details = await Merchant_details.findOne({
+                where: { user_id },
+                attributes: [
+                    'id',
+                    'company_id',
+                    'company_name',
+                    'company_logo',
+                    'website_url',
+                    'brand_name',
+                ],
+                include: [
+                    {
+                        model: User,
+                        as: 'users',
+                        required: true,
+                        attributes: ['email']
+                    }
+                ],
+                order: [['id', 'DESC']]
+            });
+        }
+
+        if (merchant_Details) {
+            const data = merchant_Details.toJSON();
+            data.email = data.users?.email || null;
+            delete data.users;
+            responseData = data;
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Details fetched successfully',
+            data: responseData
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: error.message
+        });
+    }
+};
+
+
+// const cloudinary = require('cloudinary').v2;
+const cloudinary = require('../config/cloudinary');
+exports.upload_base64 = async (req, res) => {
+  try {
+    const { image } = req.body;
+
+    if (!image) {
+      return res.status(400).json({
+        success: false,
+        message: 'Base64 image is required',
+      });
+    }
+
+    const result = await cloudinary.uploader.upload(image, {
+      folder: 'base64_uploads',
+      resource_type: 'image',
+    });
+
+    res.json({
+      success: true,
+      url: result.secure_url,
+      public_id: result.public_id,
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
     });
   }
 };

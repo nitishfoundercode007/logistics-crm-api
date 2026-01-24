@@ -50,7 +50,10 @@ const Merchant_details = sequelize.define('Merchant_details', {
   document_back: DataTypes.STRING,
   document_type: DataTypes.INTEGER,  // naya column
   user_id: DataTypes.INTEGER,
+  company_id: DataTypes.INTEGER,
   company_name: DataTypes.STRING, 
+  company_logo: DataTypes.STRING, 
+  brand_name: DataTypes.STRING, 
   website_url: DataTypes.STRING,
   is_gst: DataTypes.INTEGER, 
   gst_no: DataTypes.STRING,
@@ -140,6 +143,17 @@ Merchant_pickup_address.hasMany(Pickup_incharge_details, {
 Pickup_incharge_details.belongsTo(Merchant_pickup_address, {
   foreignKey: 'pickup_address_id',
   as: 'pickup_address'
+});
+
+Merchant_details.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'users'
+});
+
+// User model
+User.hasOne(Merchant_details, {
+  foreignKey: 'user_id',
+  as: 'merchant'
 });
 
 
